@@ -18,22 +18,26 @@ public class InventoryStockCheck {
 
     Inventory inventory = Inventory.getInstance();
 
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(fixedRate = 10000)
     public void checkInventoryStock() {
+        System.out.println("Inventory Check has started.");
         Map<Ingredient, Composition> inventoryMap =  this.inventory.getInventory();
         if(inventoryMap==null) {
+            System.out.println("Inventory Check has finished.");
             return;
         }
         for(Ingredient ingredient: inventoryMap.keySet()) {
             if(inventoryMap.get(ingredient).getQuantity() < LOW_STOCK_CHECK_NUMBER ) {
                 System.out.println(ingredient.getName() + " stock is running low.");
                 synchronized (inventory) {
-                    System.out.println(ingredient.getName() + " refilling");
+                    System.out.println(ingredient.getName() + " refilling...");
                     inventory.getInventory().put(ingredient, inventoryMap.get(ingredient).addQuantity(REFILL_STOCK_QUANTITY));
+                    System.out.println(ingredient.getName() + " refilled...");
                 }
 
             }
         }
+        System.out.println("Inventory Check has finished.");
     }
 
 

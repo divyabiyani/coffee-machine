@@ -8,28 +8,26 @@ import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Data
-@ComponentScan
 public final class CoffeeMachine {
 
     private final int noOfOutlets;
 
-    //private Inventory inventory;
-
-    //private BeverageList beverageList;
+//    @Autowired
+//    private Inventory inventory;
+//
+//    private BeverageList beverageList;
 
     ExecutorService outletPools;
 
-    private final String SUCCESSFUL_BEVERAGE_MESSAGE = " is prepared";
+    private final String SUCCESSFUL_BEVERAGE_MESSAGE = " is prepared.";
 
 
     public CoffeeMachine(int noOfOutlets, Set<Composition> initialInventory, Set<Beverage> beverageList) {
@@ -58,6 +56,7 @@ public final class CoffeeMachine {
             successfulBeverage = successfulBeverageFuture.get();
         } catch(Exception e) {
             //return error statement
+            return e.getMessage().split(": ")[1];
         }
 
         return successfulBeverage.getName() + SUCCESSFUL_BEVERAGE_MESSAGE;
