@@ -3,12 +3,6 @@ package com.dunzo.coffeemachine;
 import com.dunzo.coffeemachine.material.*;
 import com.dunzo.coffeemachine.process.Outlet;
 import lombok.Data;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Configurable;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.stereotype.Component;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -18,48 +12,59 @@ import java.util.stream.Collectors;
 @Data
 public final class CoffeeMachine {
 
+    /**
+     * This is a class that depicts the simulation of a coffee machine.
+     * This will store the no of outlets in the coffee machine, will initialize the inventory as well as prepare the beverage list.
+     */
+
     private final int noOfOutlets;
 
-//    @Autowired
-//    private Inventory inventory;
-//
-//    private BeverageList beverageList;
+    private Inventory inventory = Inventory.getInstance();
 
+    private BeverageList beverageList = BeverageList.getInstance();
+
+    /**
+     * OutletPools will make sure at a time, maximum N(i.e. noOfOutlets) beverages be served.
+     */
     ExecutorService outletPools;
-
-    private final String SUCCESSFUL_BEVERAGE_MESSAGE = " is prepared.";
-
 
     public CoffeeMachine(int noOfOutlets, Set<Composition> initialInventory, Set<Beverage> beverageList) {
         this.noOfOutlets = noOfOutlets;
-        Inventory.getInstance().setInventory(initialInventory.stream().collect(Collectors.toMap(Composition::getIngredient, Function.identity())));
-        BeverageList.getInstance().setBeverages(beverageList.stream().collect(Collectors.toMap(Beverage::getName, Function.identity())));
+        this.inventory.setInventory(initialInventory.stream().collect(Collectors.toMap(Composition::getIngredient, Function.identity())));
+        this.beverageList.setBeverages(beverageList.stream().collect(Collectors.toMap(Beverage::getName, Function.identity())));
         this.outletPools = Executors.newFixedThreadPool(this.noOfOutlets);
     }
 
-    public List<String> placeAndGetOrder(List<String> beverages) {
-        List<String> beveragesProcessResponse= new ArrayList<>();
+    /**
+     * returns a list of Future containing the result of the processing of the order containing the list of beverage names.
+     *
+     * @param List<Future<String>> beverages
+     * @return List<Future> responseFuture
+     */
+    public List<Future<String>> placeAndGetOrder(List<String> beverages) {
+        List<Future<String>> beveragesProcessResponse= new ArrayList<>();
 
         for(String beverage: beverages) {
-            String beverageProcessResponse = placeAndGetOrder(beverage);
+            Future<String> beverageProcessResponse = placeAndGetOrder(beverage);
             beveragesProcessResponse.add(beverageProcessResponse);
         }
 
         return beveragesProcessResponse;
     }
 
-    public String placeAndGetOrder(String beverage) {
-        Beverage successfulBeverage = null;
-        try {
-            Callable callable = new Outlet(beverage);
-            Future<Beverage>  successfulBeverageFuture = outletPools.submit(callable);
-            successfulBeverage = successfulBeverageFuture.get();
-        } catch(Exception e) {
-            //return error statement
-            return e.getMessage().split(": ")[1];
-        }
+    /**
+     * returns the Future containing the result of the processing of the order conataining a beverage name.
+     *
+     * @param Future<String> beverages
+     * @return Future responseFuture
+     */
 
-        return successfulBeverage.getName() + SUCCESSFUL_BEVERAGE_MESSAGE;
+    public Future<String> placeAndGetOrder(String beverage) {
+        Callable callable = new Outlet(beverage);
+        Future<String>  successfulBeverageFuture = outletPools.submit(callable);
+
+        return successfulBeverageFuture;
+
     }
 }
 

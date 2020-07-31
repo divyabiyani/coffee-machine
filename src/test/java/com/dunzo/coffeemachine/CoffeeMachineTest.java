@@ -1,25 +1,37 @@
 package com.dunzo.coffeemachine;
 
 import com.dunzo.coffeemachine.material.*;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.Future;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class CoffeeMachineTest {
+    /**
+     * This is a test class to test the Coffee Machine Simulation.
+     *
+     * CoffeeMachine is used to initialize the inventories, beverageList and also, to prepare and process order.
+     */
+
     private CoffeeMachine coffeeMachine;
 
-    @Before
+    /**
+     * This block contains a dummy dats to test the changes using the Coffee Machine Simulator.
+     * It contains -
+     *      1.) int noOfOutlets
+     *      2.) A set of Composition
+     *      3.) A set of Beverages
+     */
+
+    @BeforeEach
     public void instantiateMachine() {
         int noOfOutlets = 3;
 
@@ -73,49 +85,87 @@ public class CoffeeMachineTest {
         this.coffeeMachine = new CoffeeMachine(noOfOutlets, initialInventory, beverageList);
     }
 
+    /**
+     * This test is checking whether a single beverage which should be prepared
+     * based on the initialized inventory and beverage list we have given is giving back the beverage of not.
+     */
+
     @Test
     public void placeAndGetOrderTestSuccessful() {
-        String response = this.coffeeMachine.placeAndGetOrder("hot_tea");
-        assertEquals("hot_tea is prepared.", response);
+        Future<String> responseFuture = this.coffeeMachine.placeAndGetOrder("hot_tea");
+        try {
+            assertEquals("hot_tea is prepared.", responseFuture.get());
+        } catch (Exception e) {
+        }
     }
 
+    /**
+     * This test is checking whether a single beverage which does not appear in our beverage list is throwing an error or not
+     */
+
     @Test
-    public void placeAndGetOrderTestMultiple() {
-        String response = this.coffeeMachine.placeAndGetOrder("hot_tea");
-        assertEquals("hot_tea is prepared.", response);
-
-        response = this.coffeeMachine.placeAndGetOrder("black_tea");
-        assertEquals("black_tea is prepared.", response);
-
-        response = this.coffeeMachine.placeAndGetOrder("hot_coffee");
-        assertEquals("hot_coffee cannot be prepared because sugar_syrup is not sufficient.", response);
+    void contextLoads() {
     }
 
     @Test
     public void placeAndGetOrderIncorrectBeverageName() {
-        String response = this.coffeeMachine.placeAndGetOrder("hot_teaj");
-        assertEquals("We do not provide the following hot_teaj", response);
+        Future<String> response = this.coffeeMachine.placeAndGetOrder("hot_teaj");
+        try {
+            response.get();
+        } catch (Exception e) {
+            assertEquals("We do not provide the following hot_teaj", e.getMessage().split(": ")[1]);
+        }
     }
+
+    /**
+     * This test is checking whether a single beverage
+     * which contains an ingredient that is not present in the inventory is throwing an error ot not
+     */
 
     @Test
     public void placeAndGetOrderMissingIngredient() {
-        String response = this.coffeeMachine.placeAndGetOrder("cafe_latte");
-        assertEquals("cafe_latte cannot be prepared because cream is not available.", response);
+        Future<String> response = this.coffeeMachine.placeAndGetOrder("cafe_latte");
+        try {
+            response.get();
+        } catch (Exception e) {
+            assertEquals("cafe_latte cannot be prepared because cream is not available.", e.getMessage().split(": ")[1]);
+        }
     }
 
+
+    /**
+     * This test is checking the response of a list of beverages.
+     * Based on the input provided it should give us some successful responses, and some errors.
+     */
+
     @Test
-    public void placeAndGetOrderListTestSuccessful() {
+    public void placeAndGetOrderListTest() {
         List<String> beverageList = new ArrayList<>();
         beverageList.add("hot_tea");
         beverageList.add("hot_coffee");
         beverageList.add("black_tea");
         beverageList.add("green_tea");
-        List<String> response = this.coffeeMachine.placeAndGetOrder(beverageList);
-        System.out.println(response.toString());
-        assertEquals(4, response.size());
-        assertEquals("hot_tea is prepared.", response.get(0));
-        assertEquals("hot_coffee is prepared.", response.get(1));
-        assertEquals("black_tea cannot be prepared because hot_water is not sufficient.", response.get(2));
-        assertEquals("green_tea cannot be prepared because sugar_syrup is not sufficient.", response.get(3));
+        List<Future<String>> responseFuture = this.coffeeMachine.placeAndGetOrder(beverageList);
+        assertEquals(4, responseFuture.size());
+
+        try {
+            assertEquals("hot_tea is prepared.", responseFuture.get(0).get());
+        } catch (Exception e) { }
+
+        try {
+            assertEquals("hot_coffee is prepared.", responseFuture.get(1).get());
+        } catch (Exception e) { }
+
+        try {
+            responseFuture.get(2).get();
+        } catch (Exception e) {
+            assertEquals("black_tea cannot be prepared because hot_water is not sufficient.", e.getMessage().split(": ")[1]);
+        }
+
+        try {
+            responseFuture.get(3).get();
+        } catch (Exception e) {
+            assertEquals("green_tea cannot be prepared because sugar_syrup is not sufficient.", e.getMessage().split(": ")[1]);
+        }
     }
 }
